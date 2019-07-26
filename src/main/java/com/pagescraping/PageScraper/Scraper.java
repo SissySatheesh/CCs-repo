@@ -39,8 +39,8 @@ public class Scraper {
 	private void getPageLoder(String baseUrl)
 			throws IOException, FailingHttpStatusCodeException, MalformedURLException {
 		final WebClient client = new WebClient();
-		client.getOptions().setCssEnabled(false);
-		client.getOptions().setJavaScriptEnabled(false);
+		client.getOptions().setCssEnabled(true);
+		client.getOptions().setJavaScriptEnabled(true);
 		client.getOptions().setThrowExceptionOnScriptError(false);
 		try {
 			page = client.getPage(baseUrl);
@@ -67,7 +67,7 @@ public class Scraper {
 		analyzeMap.clear();
 
 		for (String key : keys) {
-
+			myLogger.info("===>>>"+ page.getByXPath(key).size());
 			analyzeMap.put(key, page.getByXPath(key).size());
 		}
 
@@ -78,7 +78,7 @@ public class Scraper {
 	 */
 	public void generateReport(String baseUrl) {
 		StringBuilder sb = new StringBuilder();
-		String[] keys = { "//a[@href]", "//figure|//picture/source|picture/img|//img[@src]", "//video|//iframe" };
+		String[] keys = {"//a[@href]", "//figure|//picture/source|picture/img|//img[@src]","//video|//iframe"};
 
 		try {
             
@@ -89,7 +89,7 @@ public class Scraper {
 
 			sb.append(String.format("%40s%n", "WebPage Analyze Report"));
 			sb.append(String.format("%n"));
-			sb.append(String.format("%s %10s %10s%n", "Total time to lode page", ":", this.totalTime + "ms"));
+			sb.append(String.format("%s %10s %10s%n", "Total time to load page", ":", this.totalTime + "ms"));
 			sb.append(String.format("%n"));
 			sb.append(String.format("%s %10s %10s%n", "Total Content - Length ", ":", this.pageSize));
 			sb.append(String.format("%n"));

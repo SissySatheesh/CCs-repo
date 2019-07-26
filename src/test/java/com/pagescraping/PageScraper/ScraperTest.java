@@ -49,9 +49,9 @@ public class ScraperTest {
 	public void testGenerateReport() {
 		Assert.assertTrue(page.isHtmlPage());
 		Assert.assertNotEquals(0, totalTime);
-		Assert.assertEquals(119,page.getElementsByTagName("a").size());
-		Assert.assertEquals(9,page.getElementsByTagName("figure").size());
-		Assert.assertEquals(2,page.getElementsByTagName("video").size());
+		Assert.assertEquals(119,page.getByXPath("//a[@href]").size());
+		Assert.assertEquals(9,page.getByXPath("//figure|//picture/source|picture/img|//img[@src]").size());
+		Assert.assertEquals(3,page.getByXPath("//video|//iframe").size());
 		
 		
 	}

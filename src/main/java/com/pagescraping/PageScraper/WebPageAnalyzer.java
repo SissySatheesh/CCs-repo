@@ -19,7 +19,7 @@ public class WebPageAnalyzer {
 			}
 			
 			String baseUrl = args[0];
-			//String baseUrl = "https://www.samsung.com/us/";
+			
 			if (baseUrl.startsWith("https://")) {
 				myLogger.info("===>>> URL : " + baseUrl);
 				Scraper scraper = new Scraper();
