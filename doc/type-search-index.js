@@ -1,0 +1,1 @@
+typeSearchIndex = [{"p":"com.pagescraping.PageScraper","l":"Scraper"}]
