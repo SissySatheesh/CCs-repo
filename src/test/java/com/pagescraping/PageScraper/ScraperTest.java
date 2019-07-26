@@ -51,7 +51,7 @@ public class ScraperTest {
 		Assert.assertNotEquals(0, totalTime);
 		Assert.assertEquals(119,page.getElementsByTagName("a").size());
 		Assert.assertEquals(9,page.getElementsByTagName("figure").size());
-		Assert.assertEquals(0,page.getElementsByTagName("video").size());
+		Assert.assertEquals(2,page.getElementsByTagName("video").size());
 		
 		
 	}

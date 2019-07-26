@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -16,18 +17,19 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
  * Web Page Scraper program.
  */
 public class Scraper {
-
+   
+	static Logger myLogger = Logger.getLogger(Scraper.class.getName());
+	
 	private HtmlPage page;
 	private HashMap<String, Integer> analyzeMap;
 	private long totalTime;
 	private long pageSize;
-
+	
 	/**
 	 * No argument Constructor : initialize analyzeMap to generate report.
 	 */
 	public Scraper() {
 		this.analyzeMap = new LinkedHashMap<String, Integer>();
-
 	}
 
 	/**
@@ -45,8 +47,10 @@ public class Scraper {
 
 			totalTime = page.getWebResponse().getLoadTime();
 			pageSize = page.getWebResponse().getContentLength();
-           
+			myLogger.info("===>>> Page loaded Sucessfully. ");
+			
 		} catch (NullPointerException exc) {
+			myLogger.info("===>>> Webpage not loaded");
 			throw new RuntimeException("Webpage not loaded");
 		} finally {
 			client.close();
@@ -64,7 +68,7 @@ public class Scraper {
 
 		for (String key : keys) {
 
-			analyzeMap.put(key, page.getElementsByTagName(key).size());
+			analyzeMap.put(key, page.getByXPath(key).size());
 		}
 
 	}
@@ -74,11 +78,13 @@ public class Scraper {
 	 */
 	public void generateReport(String baseUrl) {
 		StringBuilder sb = new StringBuilder();
-		String[] keys = { "a", "figure", "video" };
+		String[] keys = { "//a[@href]", "//figure|//picture/source|picture/img|//img[@src]", "//video|//iframe" };
 
 		try {
-
+            
+			myLogger.info("===>>> calling new Scraper().getPageLoder(baseurl)");
 			getPageLoder(baseUrl);
+			myLogger.info("===>>> calling new Scraper().analyzePage(baseurl)");
 			analyzePage(keys);
 
 			sb.append(String.format("%40s%n", "WebPage Analyze Report"));
@@ -90,11 +96,11 @@ public class Scraper {
 
 			for (Entry<String, Integer> entry : analyzeMap.entrySet()) {
 
-				if (entry.getKey() == "a") {
+				if (entry.getKey() == "//a[@href]") {
 					sb.append(String.format("%s %10s %10s%n", "No.of Links in Webpage ", ":", entry.getValue()));
-				} else if (entry.getKey() == "figure") {
+				} else if (entry.getKey() == "//figure|//picture/source|picture/img|//img[@src]") {
 					sb.append(String.format("%s %10s %10s%n", "No.of Images in Webpage", ":", entry.getValue()));
-				} else if (entry.getKey() == "video") {
+				} else if (entry.getKey() == "//video|//iframe") {
 					sb.append(String.format("%s %10s %10s%n", "No.of videos in Webpage", ":", entry.getValue()));
 				}
 
@@ -108,6 +114,7 @@ public class Scraper {
 			sb.append("Report generating Error:Format is null ");
 		} catch (Exception exc) {
 			sb.append(exc.getMessage());
+			myLogger.info("===>>> "+exc.getMessage());
 			exc.printStackTrace();
 		}
 	}
