@@ -20,12 +20,13 @@ public class WebPageAnalyzer {
 			
 			String baseUrl = args[0];
 			
+			
 			if (baseUrl.startsWith("https://")) {
 				myLogger.info("===>>> URL : " + baseUrl);
 				Scraper scraper = new Scraper();
 				myLogger.info("===>>> calling new Scraper().generateReport() method from WebPageAnalyzer ");
 				scraper.generateReport(baseUrl);				
-				myLogger.info("===>>> Report generated Sucessfully. ");
+				
 			} else {
 				throw new RuntimeException("Invalid Argument Passed.Expecting a valid URl");
 			}

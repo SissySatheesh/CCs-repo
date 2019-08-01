@@ -5,7 +5,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.javascript.host.css.ComputedCSSStyleDeclaration;
+import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLElement;
 
 
 /**
@@ -36,6 +39,7 @@ public class ScraperTest {
 			 page = client.getPage(baseUrl);
 			 totalTime = page.getWebResponse().getLoadTime();
 			 pageSize = page.getWebResponse().getContentLength();
+			 
 		}  
 		finally {
 			client.close();
@@ -55,6 +59,19 @@ public class ScraperTest {
 		
 		
 	}
+//	
+	@Test
+	public void testProcessImage() {
+		
+		HtmlElement figure = (HtmlElement) page.getByXPath("//figure|//picture/source|picture/img|//img[@src]").get(0);	
+	   ComputedCSSStyleDeclaration cs = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle();
+	  
+	   Assert.assertEquals("url(/v/home/ek/images/heroes/iphone-xr/main__bmngiblug0mq_largetall_2x.jpg)", cs.getBackgroundImage());
+	   Assert.assertEquals("471px",  (cs.getHeight()));
+	   Assert.assertEquals("865px",  (cs.getWidth()));
+		
+	}
+	
 	
 	/**
 	 * tests Scraper.getPage()
