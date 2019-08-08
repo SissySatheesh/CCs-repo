@@ -19,13 +19,14 @@ public class WebPageAnalyzer {
 			}
 			
 			String baseUrl = args[0];
+			//baseUrl = "https://www.apple.com/iphone-xr/";
 			
 			
 			if (baseUrl.startsWith("https://")) {
 				myLogger.info("===>>> URL : " + baseUrl);
-				Scraper scraper = new Scraper();
+				Scraper scraper = new Scraper(baseUrl);
 				myLogger.info("===>>> calling new Scraper().generateReport() method from WebPageAnalyzer ");
-				scraper.generateReport(baseUrl);				
+				scraper.generateReport();				
 				
 			} else {
 				throw new RuntimeException("Invalid Argument Passed.Expecting a valid URl");

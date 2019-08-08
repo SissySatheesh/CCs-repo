@@ -1,13 +1,20 @@
 package com.pagescraping.PageScraper;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
+
+import javax.imageio.ImageIO;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -19,6 +26,10 @@ import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLElement;
 /**
  * @author sissy Web Page Scraper program.
  */
+/**
+ * @author sissy
+ *
+ */
 public class Scraper {
 
 	static Logger myLogger = Logger.getLogger(Scraper.class.getName());
@@ -27,11 +38,13 @@ public class Scraper {
 	private HashMap<String, List<Object>> analyzeMap;
 	private long totalTime;
 	private long pageSize;
+	private String baseUrl;
 
 	/**
 	 * No argument Constructor : initialize analyzeMap to generate report.
 	 */
-	public Scraper() {
+	public Scraper(String baseUrl) {
+		this.baseUrl = baseUrl;
 		this.analyzeMap = new LinkedHashMap<String, List<Object>>();
 	}
 
@@ -54,7 +67,7 @@ public class Scraper {
 			totalTime = page.getWebResponse().getLoadTime();
 			pageSize = page.getWebResponse().getContentLength();
 			myLogger.info("===>>> Page loaded Sucessfully. ");
-			
+
 		} catch (NullPointerException exc) {
 			myLogger.info("===>>> Webpage not loaded");
 			throw new RuntimeException("Webpage not loaded");
@@ -76,50 +89,51 @@ public class Scraper {
 			analyzeMap.put(key, page.getByXPath(key));
 		}
 	}
-	
-	
+
 	/**
-	 * @param list 
-	 * @return :  Method returns a String with url and size of images .
+	 * @param list
+	 * @return : Method returns a String with url and size of images .
 	 * @throws Exception
 	 * 
 	 */
 	private String processImage(List<Object> list) throws Exception {
 
 		StringBuilder sb = new StringBuilder();
+		String size = "";
 
 		sb.append(String.format("%n%n"));
 		sb.append(String.format("%60s%n", "Images details"));
 		sb.append(String.format("%n"));
 		if (list.isEmpty()) {
-			sb.append("No videios to display");
+			sb.append("No Images to display");
 		} else {
-			sb.append(String.format("%-100s%-10s%-16s %n", "url ", "Height", "Width"));
+			sb.append(String.format("%-100s%-10s  %n", "url ", "Size"));
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
 				HtmlElement figure = (HtmlElement) obj;
 				String url = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle().getBackgroundImage();
-				String height = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle().getHeight();
-				String width = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle().getWidth();
 
-				sb.append(String.format("%-100s%-10s%-16s %n", url, height, width));
+				if (!url.isEmpty())
+					size = getAssetSize(url);
+
+				sb.append(String.format("%-100s%-10s %n", url, size + "kb"));
 
 			}
 		}
 		return sb.toString();
 	}
 
-	
 	/**
-	 * @param list 
-	 * @return :  Method returns a String with url and size of videos .
+	 * @param list
+	 * @return : Method returns a String with url and size of videos .
 	 * @throws Exception
 	 * 
 	 */
 	private String processVideo(List<Object> list) throws Exception {
 
 		StringBuilder sb = new StringBuilder();
+		String size ="";
 
 		sb.append(String.format("%n%n"));
 		sb.append(String.format("%60s%n", "Video details"));
@@ -127,19 +141,20 @@ public class Scraper {
 		if (list.isEmpty()) {
 			sb.append("No videios to display");
 		} else {
-			sb.append(String.format("%-100s%-10s%-16s %n", "url ", "Height", "Width"));
+			sb.append(String.format("%-100s%-10s %n", "url ", "Size"));
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
-				  
+
 				HtmlElement video = (HtmlElement) obj;
-			     String url = video.getAttribute("src");
-			     String height = video.getAttribute("height");
-			     String width   = video.getAttribute("width");
-			     
-			     sb.append(String.format("%-100s%-10s%-16s %n", url, height, width));
-			   
-		   }
+				String url = video.getAttribute("src");
+				
+				if (!url.isEmpty())
+					size = getAssetSize(url);
+
+				sb.append(String.format("%-100s%-10s %n", url,size+"kb"));
+
+			}
 		}
 
 		return sb.toString();
@@ -148,7 +163,8 @@ public class Scraper {
 	/**
 	 * @param baseUrl Method will generate a report based on analysis.
 	 */
-	public void generateReport(String baseUrl) {
+	public void generateReport() {
+
 		StringBuilder sb = new StringBuilder();
 		String[] keys = { "//a[@href]", "//figure|//picture/source|picture/img|//img[@src]", "//video/source[@src]" };
 		String imageDetails = "";
@@ -196,7 +212,7 @@ public class Scraper {
 			sb.append(imageDetails);
 			sb.append(videoDetails);
 			System.out.println(sb.toString());
-			
+
 			myLogger.info("===>>> Report generated Sucessfully. ");
 
 		} catch (IllegalFormatException exc) {
@@ -208,6 +224,51 @@ public class Scraper {
 			myLogger.info("===>>> " + exc.getMessage());
 			exc.printStackTrace();
 		}
+	}
+
+	/**
+	 * @param urlStr
+	 * @return Method returns Size of an image in Kb
+	 */
+	public String getAssetSize(String urlStr) {
+		
+		double size = 0;
+		int height = 0;
+		int width = 0;
+		int firstDex = urlStr.indexOf("(");
+		int lastDex = urlStr.indexOf(")");
+		String newUrlStr = urlStr;
+
+		if (firstDex != -1 && lastDex != -1)
+			newUrlStr = this.baseUrl + urlStr.substring(firstDex + 1, lastDex);
+
+		try {
+			URL url = new URL(newUrlStr);
+			myLogger.info("===>url -- " + url);
+			URLConnection conn;
+			conn = url.openConnection();
+
+			// get the size of image
+			size = (double) conn.getContentLength() / 1024;
+
+			InputStream in = conn.getInputStream();
+			BufferedImage image = ImageIO.read(in);
+
+			// get the dimension
+			width = image.getWidth();
+			height = image.getHeight();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+
+		myLogger.info("====> size - " + size);
+		myLogger.info("====> height - " + height + " width - " + width);
+
+		DecimalFormat df = new DecimalFormat("#.0");
+
+		return df.format(size);
 	}
 
 	/**

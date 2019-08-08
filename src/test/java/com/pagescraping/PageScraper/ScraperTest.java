@@ -1,5 +1,7 @@
 package com.pagescraping.PageScraper;
 
+
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.host.css.ComputedCSSStyleDeclaration;
 import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLElement;
+
 
 
 /**
@@ -68,10 +71,19 @@ public class ScraperTest {
 	   ComputedCSSStyleDeclaration cs = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle();
 	  
 	   Assert.assertEquals("url(/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_largetall_2x.jpg)", cs.getBackgroundImage());
-	   Assert.assertEquals("471px",  (cs.getHeight()));
-	   Assert.assertEquals("865px",  (cs.getWidth()));
-		
+	  
 	}
+	
+	/**
+	 * tests new Scraper().getAssetSize(String urlStr);
+	 */
+	@Test
+    public void testGetAssetSize() {
+    	Scraper sc = new Scraper(baseUrl);
+    	Assert.assertEquals("129.3", sc.getAssetSize("url(/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_largetall_2x.jpg)"));
+    	Assert.assertEquals("26.6",  sc.getAssetSize("url(/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_small.jpg)"));   	
+    	
+    }
 	
 	
 	/**
