@@ -19,7 +19,6 @@ public class WebPageAnalyzer {
 			}
 			
 			String baseUrl = args[0];
-			//baseUrl = "https://www.apple.com/iphone-xr/";
 			
 			
 			if (baseUrl.startsWith("https://")) {

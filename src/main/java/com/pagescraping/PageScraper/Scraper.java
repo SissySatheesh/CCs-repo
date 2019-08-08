@@ -1,12 +1,15 @@
 package com.pagescraping.PageScraper;
 
 import java.awt.image.BufferedImage;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.LinkedHashMap;
@@ -20,6 +23,9 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlFigure;
+import com.gargoylesoftware.htmlunit.html.HtmlImage;
+import com.gargoylesoftware.htmlunit.html.HtmlMedia;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLElement;
 
@@ -86,17 +92,89 @@ public class Scraper {
 		analyzeMap.clear();
 
 		for (String key : keys) {
-			analyzeMap.put(key, page.getByXPath(key));
+			
+			if(key == "//figure|//picture/source|picture/img|//img") {
+	
+				List<Object> list = page.getByXPath(key);
+				myLogger.info("===>>> calling new Scraper().processImage(list)");
+				analyzeMap.put(key,processImage(list));
+			}
+		
+			else {
+			  analyzeMap.put(key, page.getByXPath(key));
+			} 
+			
 		}
 	}
 
+	/**
+	 * @param list
+	 * @return process images and returns image list 
+	 * @throws Exception
+	 */
+	private List<Object> processImage(List<Object> list) throws Exception  {
+		
+		List<Object> imageList =  new ArrayList<Object>();
+		
+		for (Object obj : list){
+			if(obj instanceof HtmlFigure) {
+			HtmlFigure fig = (HtmlFigure) obj;
+			
+			   if(fig.getByXPath("//figure/video").isEmpty()) {
+				   if(getImageUrl(fig) != null)
+			  
+				       imageList.add(obj);	     
+			   }
+			 
+		    }
+			else {
+			       imageList.add(obj);
+			}
+	    }// end of for loop
+		
+		return imageList;
+	}
+	
+
+	/**
+	 * @param obj
+	 * @return Method returns url String for Images
+	 */
+	private String getImageUrl(Object obj) {
+		String url =null;
+		
+		HtmlElement figure = (HtmlElement) obj;
+	    
+		
+		if(figure instanceof HtmlImage) {
+			
+			if(!figure.getAttribute("src").isEmpty()) {
+				
+				url = figure.getAttribute("src");
+			}
+		}
+		else {
+		  String cssUrl = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle().getBackgroundImage();
+		 
+		  if(cssUrl.equalsIgnoreCase("none")  || cssUrl.isEmpty()) {
+			  
+			  url = null;
+		  }
+		  else {
+			  url = cssUrl;
+		  }
+		}
+		
+		return url;
+	}
+	
 	/**
 	 * @param list
 	 * @return : Method returns a String with url and size of images .
 	 * @throws Exception
 	 * 
 	 */
-	private String processImage(List<Object> list) throws Exception {
+	private String gerenerateImageDetails(List<Object> list) throws Exception {
 
 		StringBuilder sb = new StringBuilder();
 		String size = "";
@@ -111,26 +189,48 @@ public class Scraper {
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
-				HtmlElement figure = (HtmlElement) obj;
-				String url = ((HTMLElement) figure.getScriptableObject()).getCurrentStyle().getBackgroundImage();
+				
+				String url = getImageUrl(obj);
 
-				if (!url.isEmpty())
-					size = getAssetSize(url);
-
-				sb.append(String.format("%-100s%-10s %n", url, size + "kb"));
+				if (url != null) {
+					myLogger.info("===>>> calling new Scraper().getAssetSize(url)");
+					size = getImageSize(url);
+				}
+				sb.append(String.format("%-100s%-10s %n", url, size));
 
 			}
 		}
 		return sb.toString();
 	}
+	
+	
+	/**
+	 * @param obj
+	 * @return Method returns url String for videos
+	 */
+	private String getVideoUrl(Object obj) {
+		String url =null;
+		
+		HtmlElement video = (HtmlElement) obj;
+		
+		if(video instanceof HtmlMedia) {
+			
+			url = video.getAttribute("src");
+		}
+		else if(video instanceof HtmlFigure) {
+		 url = video.getAttribute("src");
+		   
+		}
+		return url;
+	}
 
 	/**
 	 * @param list
-	 * @return : Method returns a String with url and size of videos .
+	 * @return : Method generates a String with url and size of videos .
 	 * @throws Exception
 	 * 
 	 */
-	private String processVideo(List<Object> list) throws Exception {
+	private String generateVideoDetails(List<Object> list) throws Exception {
 
 		StringBuilder sb = new StringBuilder();
 		String size ="";
@@ -145,12 +245,13 @@ public class Scraper {
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
-
-				HtmlElement video = (HtmlElement) obj;
-				String url = video.getAttribute("src");
 				
-				if (!url.isEmpty())
-					size = getAssetSize(url);
+				String url = getVideoUrl(obj);
+
+				if (url != null) {
+					myLogger.info("===>>> calling new Scraper().getAssetSize(url)");
+					size = getVideoSize(url);
+				}
 
 				sb.append(String.format("%-100s%-10s %n", url,size+"kb"));
 
@@ -166,7 +267,7 @@ public class Scraper {
 	public void generateReport() {
 
 		StringBuilder sb = new StringBuilder();
-		String[] keys = { "//a[@href]", "//figure|//picture/source|picture/img|//img[@src]", "//video/source[@src]" };
+		String[] keys = { "//a[@href]", "//figure|//picture/source|picture/img|//img", "//video[@src]|//figure/video" };
 		String imageDetails = "";
 		String videoDetails = "";
 
@@ -178,14 +279,14 @@ public class Scraper {
 			analyzePage(keys);
 
 			for (Entry<String, List<Object>> entry : analyzeMap.entrySet()) {
-				if (entry.getKey() == "//figure|//picture/source|picture/img|//img[@src]") {
-					myLogger.info("===>>> calling new Scraper().processImage(List<Object> list)");
-					imageDetails = processImage(entry.getValue());
+				if (entry.getKey() == "//figure|//picture/source|picture/img|//img") {
+					myLogger.info("===>>> calling new Scraper().gerenerateImageDetails(List<Object> list)");
+					imageDetails = gerenerateImageDetails(entry.getValue());
 				}
 
-				if (entry.getKey() == "//video/source[@src]") {
-					myLogger.info("===>>> calling new Scraper().processVideo(List<Object> list)");
-					videoDetails = processVideo(entry.getValue());
+				if (entry.getKey() == "//video[@src]|//figure/video") {
+					myLogger.info("===>>> calling new Scraper(). generateVideoDetails(List<Object> list)");
+					videoDetails = generateVideoDetails(entry.getValue());
 				}
 
 			}
@@ -201,9 +302,9 @@ public class Scraper {
 
 				if (entry.getKey() == "//a[@href]") {
 					sb.append(String.format("%s %10s %10s%n", "No.of Links in Webpage ", ":", entry.getValue().size()));
-				} else if (entry.getKey() == "//figure|//picture/source|picture/img|//img[@src]") {
+				} else if (entry.getKey() == "//figure|//picture/source|picture/img|//img") {
 					sb.append(String.format("%s %10s %10s%n", "No.of Images in Webpage", ":", entry.getValue().size()));
-				} else if (entry.getKey() == "//video/source[@src]") {
+				} else if (entry.getKey() == "//video[@src]|//figure/video") {
 					sb.append(String.format("%s %10s %10s%n", "No.of videos in Webpage", ":", entry.getValue().size()));
 				}
 
@@ -211,6 +312,7 @@ public class Scraper {
 
 			sb.append(imageDetails);
 			sb.append(videoDetails);
+			
 			System.out.println(sb.toString());
 
 			myLogger.info("===>>> Report generated Sucessfully. ");
@@ -230,7 +332,7 @@ public class Scraper {
 	 * @param urlStr
 	 * @return Method returns Size of an image in Kb
 	 */
-	public String getAssetSize(String urlStr) {
+	public String getImageSize(String urlStr) {
 		
 		double size = 0;
 		int height = 0;
@@ -245,22 +347,24 @@ public class Scraper {
 		try {
 			URL url = new URL(newUrlStr);
 			myLogger.info("===>url -- " + url);
-			URLConnection conn;
-			conn = url.openConnection();
+			URLConnection conn =  url.openConnection();
 
 			// get the size of image
 			size = (double) conn.getContentLength() / 1024;
 
 			InputStream in = conn.getInputStream();
 			BufferedImage image = ImageIO.read(in);
-
+			
 			// get the dimension
 			width = image.getWidth();
 			height = image.getHeight();
+		} catch (FileNotFoundException exc) {
+			exc.printStackTrace();
+			return "Image not found";	
 
-		} catch (IOException e) {
-
-			e.printStackTrace();
+		} catch (IOException exc) {
+             
+			exc.printStackTrace();
 		}
 
 		myLogger.info("====> size - " + size);
@@ -268,7 +372,51 @@ public class Scraper {
 
 		DecimalFormat df = new DecimalFormat("#.0");
 
-		return df.format(size);
+		return df.format(size)+" kb";
+	}
+	
+	/**
+	 * @param urlStr
+	 * @return Method returns Size of an image in Kb
+	 */
+	public String getVideoSize(String urlStr) {
+		
+		double size = 0;
+		
+		int firstDex = urlStr.indexOf("(");
+		int lastDex = urlStr.indexOf(")");
+		String newUrlStr = urlStr;
+
+		if (firstDex != -1 && lastDex != -1)
+			newUrlStr = this.baseUrl + urlStr.substring(firstDex + 1, lastDex);
+
+		try {
+			URL url = new URL(newUrlStr);
+			myLogger.info("===>url -- " + url);
+			 HttpURLConnection conn = null;
+			 conn = (HttpURLConnection) url.openConnection();
+             
+			 conn.setRequestMethod("HEAD");
+	          conn.getInputStream();
+			
+	          // get the size of image
+			size = (double) conn.getContentLength() / (1024*1024);
+			System.out.println("==>Size:"+size);
+
+		} catch (FileNotFoundException exc) {
+			exc.printStackTrace();
+			return "video not found";	
+
+		} catch (IOException exc) {
+             
+			exc.printStackTrace();
+		}
+
+		myLogger.info("====> size - " + size);
+
+		DecimalFormat df = new DecimalFormat("#.0");
+
+		return df.format(size)+" mb";
 	}
 
 	/**
