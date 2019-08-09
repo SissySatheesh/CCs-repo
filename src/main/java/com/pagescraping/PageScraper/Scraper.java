@@ -161,7 +161,10 @@ public class Scraper {
 			  url = null;
 		  }
 		  else {
-			  url = cssUrl;
+			 int firstDex = cssUrl.indexOf("(");
+			int lastDex = cssUrl.indexOf(")");
+				if (firstDex != -1 && lastDex != -1)
+					url = this.baseUrl + cssUrl.substring(firstDex + 1, lastDex);
 		  }
 		}
 		
@@ -185,7 +188,7 @@ public class Scraper {
 		if (list.isEmpty()) {
 			sb.append("No Images to display");
 		} else {
-			sb.append(String.format("%-100s%-10s  %n", "url ", "Size"));
+			sb.append(String.format("%-120s%-10s  %n", "url ", "Size"));
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
@@ -193,10 +196,11 @@ public class Scraper {
 				String url = getImageUrl(obj);
 
 				if (url != null) {
+
 					myLogger.info("===>>> calling new Scraper().getAssetSize(url)");
 					size = getImageSize(url);
 				}
-				sb.append(String.format("%-100s%-10s %n", url, size));
+				sb.append(String.format("%-120s%-10s %n", url, size));
 
 			}
 		}
@@ -241,7 +245,7 @@ public class Scraper {
 		if (list.isEmpty()) {
 			sb.append("No videios to display");
 		} else {
-			sb.append(String.format("%-100s%-10s %n", "url ", "Size"));
+			sb.append(String.format("%-120s%-10s %n", "url ", "Size"));
 			sb.append(String.format("%n"));
 
 			for (Object obj : list) {
@@ -253,7 +257,7 @@ public class Scraper {
 					size = getVideoSize(url);
 				}
 
-				sb.append(String.format("%-100s%-10s %n", url,size+"kb"));
+				sb.append(String.format("%-120s%-10s %n", url,size+"kb"));
 
 			}
 		}
@@ -337,15 +341,9 @@ public class Scraper {
 		double size = 0;
 		int height = 0;
 		int width = 0;
-		int firstDex = urlStr.indexOf("(");
-		int lastDex = urlStr.indexOf(")");
-		String newUrlStr = urlStr;
-
-		if (firstDex != -1 && lastDex != -1)
-			newUrlStr = this.baseUrl + urlStr.substring(firstDex + 1, lastDex);
 
 		try {
-			URL url = new URL(newUrlStr);
+			URL url = new URL(urlStr);
 			myLogger.info("===>url -- " + url);
 			URLConnection conn =  url.openConnection();
 
@@ -382,16 +380,9 @@ public class Scraper {
 	public String getVideoSize(String urlStr) {
 		
 		double size = 0;
-		
-		int firstDex = urlStr.indexOf("(");
-		int lastDex = urlStr.indexOf(")");
-		String newUrlStr = urlStr;
-
-		if (firstDex != -1 && lastDex != -1)
-			newUrlStr = this.baseUrl + urlStr.substring(firstDex + 1, lastDex);
 
 		try {
-			URL url = new URL(newUrlStr);
+			URL url = new URL(urlStr);
 			myLogger.info("===>url -- " + url);
 			 HttpURLConnection conn = null;
 			 conn = (HttpURLConnection) url.openConnection();

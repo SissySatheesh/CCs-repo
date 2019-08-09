@@ -80,9 +80,9 @@ public class ScraperTest {
 	@Test
     public void testGetImageSize() {
     	Scraper sc = new Scraper(baseUrl);
-    	Assert.assertEquals("129.3 kb", sc.getImageSize("url(/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_largetall_2x.jpg)"));
-    	Assert.assertEquals("26.6 kb",  sc.getImageSize("url(/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_small.jpg)"));   
-    	Assert.assertEquals("7.8 kb",  sc.getImageSize("url(/ac/ac-video-posterframe/1.0/images/ac-video-poster_848x480.jpg)"));
+    	Assert.assertEquals("129.3 kb", sc.getImageSize("https://www.apple.com/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_largetall_2x.jpg"));
+    	Assert.assertEquals("26.6 kb",  sc.getImageSize("https://www.apple.com/v/home/el/images/heroes/iphone-xr/main__bmngiblug0mq_small.jpg"));   
+    	Assert.assertEquals("7.8 kb",  sc.getImageSize("https://www.apple.com/ac/ac-video-posterframe/1.0/images/ac-video-poster_848x480.jpg"));
     	
     }
 	
@@ -93,7 +93,7 @@ public class ScraperTest {
 	@Test
     public void testGetVideoSize() {
     	Scraper sc = new Scraper(baseUrl);
-    	Assert.assertEquals("17.0 mb", sc.getVideoSize("url(/105/media/us/mac/2019/a2e24e9a-4467-4fc0-b5db-8975ea83b8be/films/behind-the-mac/mac-behind-the-mac-tpl-cc-us-2019_416x234h.mp4)"));
+    	Assert.assertEquals("17.0 mb", sc.getVideoSize("https://www.apple.com/105/media/us/mac/2019/a2e24e9a-4467-4fc0-b5db-8975ea83b8be/films/behind-the-mac/mac-behind-the-mac-tpl-cc-us-2019_416x234h.mp4"));
   
     }
 	
